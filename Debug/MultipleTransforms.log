@@ -1,12 +1,11 @@
-﻿  Hw2.cpp
-F:\repo\Direct2D\Direct2D-Game-Progect\Hw2.cpp(26): warning C4244: '인수': 'time_t'에서 'unsigned int'(으)로 변환하면서 데이터가 손실될 수 있습니다.
-F:\repo\Direct2D\Direct2D-Game-Progect\Hw2.cpp(435): warning C4459: 'scale' 선언은 전역 선언을 숨깁니다.
-  F:\repo\Direct2D\Direct2D-Game-Progect\Hw2.cpp(20): note: 'scale' 선언을 참조하십시오.
-F:\repo\Direct2D\Direct2D-Game-Progect\Hw2.cpp(451): warning C4456: 'rtSize' 선언은 이전 로컬 선언을 숨깁니다.
-  F:\repo\Direct2D\Direct2D-Game-Progect\Hw2.cpp(432): note: 'rtSize' 선언을 참조하십시오.
-F:\repo\Direct2D\Direct2D-Game-Progect\Hw2.cpp(519): warning C4456: 'size' 선언은 이전 로컬 선언을 숨깁니다.
-  F:\repo\Direct2D\Direct2D-Game-Progect\Hw2.cpp(458): note: 'size' 선언을 참조하십시오.
-F:\repo\Direct2D\Direct2D-Game-Progect\Hw2.cpp(548): warning C4996: '_swprintf': This function or variable may be unsafe. Consider using swprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+﻿C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\MSBuild\Microsoft\VC\v160\Microsoft.CppBuild.targets(411,5): warning MSB8028: 중간 디렉터리(Debug\)에 다른 프로젝트(Hw2.vcxproj)에서 공유하는 파일이 포함되어 있습니다.  이로 인해 잘못된 정리 및 다시 빌드 동작이 수행될 수 있습니다.
+  Hw3.cpp
+F:\repo\Direct2D\Direct2D-Game-Progect\Hw3.cpp(22): warning C4244: '인수': 'time_t'에서 'unsigned int'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+F:\repo\Direct2D\Direct2D-Game-Progect\Hw3.cpp(447): warning C4456: 'rtSize' 선언은 이전 로컬 선언을 숨깁니다.
+  F:\repo\Direct2D\Direct2D-Game-Progect\Hw3.cpp(428): note: 'rtSize' 선언을 참조하십시오.
+F:\repo\Direct2D\Direct2D-Game-Progect\Hw3.cpp(508): warning C4456: 'size' 선언은 이전 로컬 선언을 숨깁니다.
+  F:\repo\Direct2D\Direct2D-Game-Progect\Hw3.cpp(454): note: 'size' 선언을 참조하십시오.
+F:\repo\Direct2D\Direct2D-Game-Progect\Hw3.cpp(537): warning C4996: '_swprintf': This function or variable may be unsafe. Consider using swprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
   C:\Program Files (x86)\Windows Kits\10\Include\10.0.17763.0\ucrt\corecrt_wstdio.h(1446): note: '_swprintf' 선언을 참조하십시오.
-F:\repo\Direct2D\Direct2D-Game-Progect\Hw2.cpp(520): warning C4189: 'translation_size': 지역 변수가 초기화되었으나 참조되지 않았습니다.
-  MultipleTransforms.vcxproj -> F:\repo\Direct2D\Direct2D-Game-Progect\Debug\Hw2.exe
+F:\repo\Direct2D\Direct2D-Game-Progect\Hw3.cpp(509): warning C4189: 'translation_size': 지역 변수가 초기화되었으나 참조되지 않았습니다.
+  MultipleTransforms.vcxproj -> F:\repo\Direct2D\Direct2D-Game-Progect\Debug\HW3.exe

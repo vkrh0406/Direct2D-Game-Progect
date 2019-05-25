@@ -15,8 +15,8 @@ Bullet::Bullet(const Bullet& r)
 
 Bullet::Bullet(float mouse_x, float mouse_y)
 {
-	x = mouse_x;
-	y = mouse_y;
+	x = mouse_x-150.0f;
+	y = mouse_y-70.0f;
 }
 
 Bullet::~Bullet()

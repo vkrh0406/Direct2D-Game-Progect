@@ -3,31 +3,13 @@
 #include <vector>
 #include <time.h>
 #include <stdlib.h>
+#include "Bullet.h"
 
 
-//
-//class Bullet
-//{
-//public:
-//	Bullet();
-//	Bullet(float mouse_x, float mouse_y);
-//	~Bullet();
-//	float x, y;
-//	float size = 100;
-//	float translation_size = 0;
-//private:
-//
-//};
-//
-//Bullet::Bullet(float mouse_x,float mouse_y)
-//{
-//	x = mouse_x;
-//	y = mouse_y;
-//}
 
 
 int gamePoint; // 표시할 게임 점수
-//std::vector<Bullet> bullets; //총알들 모아놓을 벡터
+std::vector<Bullet> bullets;
 int vectorsize = 0; //벡터 사이즈
 clock_t cooltime_start, cooltime_end;
 float enemy_spawn_cooltime = 2.0f;
@@ -524,31 +506,46 @@ HRESULT DemoApp::OnRender()
 		//적 생성
 		m_pRenderTarget->DrawBitmap(m_pBitmap_Enemy, D2D1::RectF(10.0f,250.0f,150.0f, 400.0f));
 
+		std::vector<Bullet>::iterator iter;
 
-		////총알 생성 및 충돌 감지
-		//for (int i = 0; i < bullets.size(); i++)
-		//{
-		//	float x = bullets.at(i).x;
-		//	float y = bullets.at(i).y;
-		//	float size = bullets.at(i).size;
-		//	float translation_size = bullets.at(i).translation_size;
-		//	
-		//	m_pRenderTarget->DrawBitmap(m_pBitmap_Bullet, D2D1::RectF(x, y, x+size, y+size));
-		//	bullets.at(i).x = x - 5.0f;
+		int i = 0;
+		//총알 생성 및 충돌 감지
+		for (iter=bullets.begin();iter!=bullets.end();)
+		{
+			Bullet temp = *iter;
+			
+			float x = temp.x;
+			float y = temp.y;
+			float size = temp.size;
+			float translation_size = temp.translation_size;
+			
+			m_pRenderTarget->DrawBitmap(m_pBitmap_Bullet, D2D1::RectF(x, y, x+size, y+size-50));
+
+			
 
 
-		//	/*D2D1::Matrix3x2F translation = D2D1::Matrix3x2F::Translation(-800.0f, 0.0f);
-		//	m_pRenderTarget->SetTransform(translation);*/
+			bullets.at(i).x = x - 5.0f;
 
-		//	
-		//}
+			if (x >= 10.0f && x <= 150.0f && y >= 250.0f && y <= 400.0f) //충돌 확인
+			{
+				gamePoint += 100;
+
+				iter=bullets.erase(iter);
+			}
+			else {
+				i++;
+				iter++;
+			}
+			
+			
+		}
 
 
 
 
 		m_pRenderTarget->SetTransform(D2D1::Matrix3x2F::Identity());
 		
-		_swprintf(text, L"마우스x:%f\n마우스y:%f\n", mouse_current_x, mouse_current_y);
+		_swprintf(text, L"마우스x:%f\n마우스y:%f\n 점수: %d \n", mouse_current_x, mouse_current_y,gamePoint);
 
 		m_pRenderTarget->DrawText(text, wcslen(text), m_pTextFormat, D2D1::RectF(10.0f, 10.0f, 150.0f, 150.0f), m_pTextBrush);
 
@@ -730,7 +727,8 @@ LRESULT CALLBACK DemoApp::WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM
 			mouse_current_x = LOWORD(lParam);
 			mouse_current_y = HIWORD(lParam);
 
-			/*bullets.push_back(Bullet(mouse_current_x, mouse_current_y));*/
+		
+			bullets.push_back(Bullet(mouse_current_x, mouse_current_y));
 			//// 특정 좌표값의 클릭인지 확인함 (맨위 박스)
 			//if (x >= 560 && x <= 630 && y >= 50 && y <= 120 && vectorsize<=7)
 			//{

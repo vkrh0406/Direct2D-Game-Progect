@@ -78,7 +78,11 @@ private:
 	//BitMap
 	ID2D1Bitmap* m_pBitmap;
 	ID2D1Bitmap* m_pBitmap_Mountain;
+	ID2D1Bitmap* m_pBitmap_Mountains;
 	ID2D1Bitmap* m_pBitmap_Trees;
+	ID2D1Bitmap* m_pBitmap_Gun;
+	ID2D1Bitmap* m_pBitmap_Enemy;
+	ID2D1Bitmap* m_pBitmap_Bullet;
 
 	//Animation
 	AnimationLinear<float> m_Animation;

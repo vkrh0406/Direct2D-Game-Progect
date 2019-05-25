@@ -5,15 +5,36 @@
 #include <stdlib.h>
 
 
+//
+//class Bullet
+//{
+//public:
+//	Bullet();
+//	Bullet(float mouse_x, float mouse_y);
+//	~Bullet();
+//	float x, y;
+//	float size = 100;
+//	float translation_size = 0;
+//private:
+//
+//};
+//
+//Bullet::Bullet(float mouse_x,float mouse_y)
+//{
+//	x = mouse_x;
+//	y = mouse_y;
+//}
 
 
-
+int gamePoint; // 표시할 게임 점수
+//std::vector<Bullet> bullets; //총알들 모아놓을 벡터
 int vectorsize = 0; //벡터 사이즈
-
+clock_t cooltime_start, cooltime_end;
+float enemy_spawn_cooltime = 2.0f;
 
 bool isClick;//상단 중간의 정사각형 클릭 여부 true일때 클릭
 bool isClick2;  //삭제를 위한 클릭 여부
-float current_x, current_y; // 현재 마우스 좌표값
+float mouse_current_x, mouse_current_y; // 현재 마우스 좌표값
 float angle, scale = 0;; // 회전각, 스케일 값
 int downY = 600; // 벡터 상자 초기 Y값
 int currentY = downY; //현재 밑값
@@ -65,6 +86,10 @@ DemoApp::DemoApp() :
 	m_Animation(),
 	m_pBitmap(NULL),
 	m_pBitmap_Mountain(NULL),
+	m_pBitmap_Mountains(NULL),
+	m_pBitmap_Gun(NULL),
+	m_pBitmap_Enemy(NULL),
+	m_pBitmap_Bullet(NULL),
 	m_pBitmap_Trees(NULL),
 	m_pPathGeometry(NULL)
 {
@@ -83,7 +108,12 @@ DemoApp::~DemoApp()
 	SAFE_RELEASE(m_pDWriteFactory);
 	SAFE_RELEASE(m_pTextFormat);
 	SAFE_RELEASE(m_pBitmap);
-	
+	SAFE_RELEASE(m_pBitmap_Mountain);
+	SAFE_RELEASE(m_pBitmap_Mountains);
+	SAFE_RELEASE(m_pBitmap_Trees);
+	SAFE_RELEASE(m_pBitmap_Gun);
+	SAFE_RELEASE(m_pBitmap_Enemy);
+	SAFE_RELEASE(m_pBitmap_Bullet);
 }
 
 HRESULT DemoApp::Initialize(HINSTANCE hInstance)
@@ -121,7 +151,7 @@ HRESULT DemoApp::Initialize(HINSTANCE hInstance)
 			{
 				m_Animation.SetStart(0); //start at beginning of path
 				m_Animation.SetEnd(length); //length at end of path
-				m_Animation.SetDuration(5.0f); //seconds
+				m_Animation.SetDuration(4.0f); //seconds
 
 				ShowWindow(m_hwnd, SW_SHOWNORMAL);
 				UpdateWindow(m_hwnd);
@@ -228,7 +258,7 @@ HRESULT DemoApp::CreateDeviceResources()
 		hr = m_pD2DFactory->CreateHwndRenderTarget(D2D1::RenderTargetProperties(), D2D1::HwndRenderTargetProperties(m_hwnd, size), &m_pRenderTarget);
 
 		
-		// 외부 파일로부터 비트맵 객체 m_pAnotherBitmap를 생성함.
+		// 외부 파일로부터 비트맵 객체를 생성함.
 		if (SUCCEEDED(hr))
 		{
 			hr = LoadBitmapFromFile(m_pRenderTarget, m_pWICFactory, L".\\background2.png", 100, 0, &m_pBitmap);
@@ -238,10 +268,24 @@ HRESULT DemoApp::CreateDeviceResources()
 		{
 			hr = LoadBitmapFromFile(m_pRenderTarget, m_pWICFactory, L".\\Mountain.png", 100, 0, &m_pBitmap_Mountain);
 		}
-
+		if (SUCCEEDED(hr))
+		{
+			hr = LoadBitmapFromFile(m_pRenderTarget, m_pWICFactory, L".\\Mountains.png", 100, 0, &m_pBitmap_Mountains);
+		}
 		if (SUCCEEDED(hr))
 		{
 			hr = LoadBitmapFromFile(m_pRenderTarget, m_pWICFactory, L".\\Trees.png", 100, 0, &m_pBitmap_Trees);
+		}
+		if (SUCCEEDED(hr))
+		{
+			hr = LoadBitmapFromFile(m_pRenderTarget, m_pWICFactory, L".\\Gun.png", 100, 0, &m_pBitmap_Gun);
+		}
+		if (SUCCEEDED(hr))
+		{
+			hr = LoadBitmapFromFile(m_pRenderTarget, m_pWICFactory, L".\\Enemy.png", 100, 0, &m_pBitmap_Enemy);
+		}if (SUCCEEDED(hr))
+		{
+			hr = LoadBitmapFromFile(m_pRenderTarget, m_pWICFactory, L".\\Bullet.png", 100, 0, &m_pBitmap_Bullet);
 		}
 
 		if (SUCCEEDED(hr))
@@ -377,6 +421,9 @@ void DemoApp::DiscardDeviceResources()
 	SAFE_RELEASE(m_pTextBrush);
 	SAFE_RELEASE(m_pGridPatternBitmapBrush);
 	SAFE_RELEASE(m_pBitmap);
+	SAFE_RELEASE(m_pBitmap_Mountain);
+	SAFE_RELEASE(m_pBitmap_Mountains);
+	SAFE_RELEASE(m_pBitmap_Trees);
 }
 
 void DemoApp::RunMessageLoop()
@@ -431,16 +478,13 @@ HRESULT DemoApp::OnRender()
 		//배경 2 (산)
 		m_pRenderTarget->DrawBitmap(m_pBitmap_Mountain, D2D1::RectF(0.0f, 0.0f, rtSize.width, rtSize.height));
 		
-
+		m_pRenderTarget->DrawBitmap(m_pBitmap_Mountains, D2D1::RectF(0.0f, rtSize.height / 2, rtSize.width, rtSize.height));
 		//애니메이션
 
 		// 렌더타겟 변환을 항등 변환으로 리셋함.
 		m_pRenderTarget->SetTransform(D2D1::Matrix3x2F::Identity());
 		
-		//m_pRenderTarget->SetTransform(scale * translation);
 		
-		// 이동 동선을 붉은색으로 그림.
-		m_pRenderTarget->DrawGeometry(m_pPathGeometry, m_pTextBrush);
 		
 		
 		static float anim_time = 0.0f;
@@ -458,25 +502,59 @@ HRESULT DemoApp::OnRender()
 
 		m_pRenderTarget->SetTransform(triangleMatrix * scale * translation);
 		//배경 3 비트맵
+		
 		m_pRenderTarget->DrawBitmap(m_pBitmap_Trees, D2D1::RectF(0.0f, 0.0f, rtSize.width, rtSize.height));
+
 		m_pRenderTarget->SetTransform(translation);
 		
 		// 렌더타겟 변환을 항등 변환으로 리셋함.
 		m_pRenderTarget->SetTransform(D2D1::Matrix3x2F::Identity());
 
-		m_pOriginalShapeBrush->SetOpacity(0.5);
-		m_pFillBrush->SetOpacity(0.5f);
+		/*m_pOriginalShapeBrush->SetOpacity(0.5);
+		m_pFillBrush->SetOpacity(0.5f);*/
 
 	
-		DrawAll();
+		//DrawAll();
 
 		
+		// 플레이어의 마우스에 총 생성
+
+		m_pRenderTarget->DrawBitmap(m_pBitmap_Gun, D2D1::RectF(mouse_current_x-80.0f, mouse_current_y-80.0f, mouse_current_x+80.0f, mouse_current_y + 80.0f));
+
+		//적 생성
+		m_pRenderTarget->DrawBitmap(m_pBitmap_Enemy, D2D1::RectF(10.0f,250.0f,150.0f, 400.0f));
+
+
+		////총알 생성 및 충돌 감지
+		//for (int i = 0; i < bullets.size(); i++)
+		//{
+		//	float x = bullets.at(i).x;
+		//	float y = bullets.at(i).y;
+		//	float size = bullets.at(i).size;
+		//	float translation_size = bullets.at(i).translation_size;
+		//	
+		//	m_pRenderTarget->DrawBitmap(m_pBitmap_Bullet, D2D1::RectF(x, y, x+size, y+size));
+		//	bullets.at(i).x = x - 5.0f;
+
+
+		//	/*D2D1::Matrix3x2F translation = D2D1::Matrix3x2F::Translation(-800.0f, 0.0f);
+		//	m_pRenderTarget->SetTransform(translation);*/
+
+		//	
+		//}
+
+
+
 
 		m_pRenderTarget->SetTransform(D2D1::Matrix3x2F::Identity());
 		
-		_swprintf(text, L"마우스x:%f\n마우스y:%f\n회전각:%f\nSize:%f\n상자의 수:%d", current_x, current_y, angle, scale, vectorsize);
+		_swprintf(text, L"마우스x:%f\n마우스y:%f\n", mouse_current_x, mouse_current_y);
 
 		m_pRenderTarget->DrawText(text, wcslen(text), m_pTextFormat, D2D1::RectF(10.0f, 10.0f, 150.0f, 150.0f), m_pTextBrush);
+
+		
+
+
 
 		// 그리기 연산들을 제출함.
 		hr = m_pRenderTarget->EndDraw();
@@ -486,6 +564,8 @@ HRESULT DemoApp::OnRender()
 			hr = S_OK;
 			DiscardDeviceResources();
 		}
+
+
 		// 애니메이션의 끝에 도달하면 다시 처음으로 되돌려서 반복되도록 함.
 		if (anim_time >= m_Animation.GetDuration())
 		{
@@ -506,88 +586,88 @@ HRESULT DemoApp::OnRender()
 	return hr;
 }
 
-void DemoApp::DrawAll()
-{
-	float x = 560.0f;  //초기 박스가 위치할 좌표 x y
-	float y = 50.0f;
-	WCHAR text[100];
-
-	if (!isClick) { // 상단 중앙의 정사각형이 아직 클릭 안됐을 때
-	D2D1_RECT_F rectangle = D2D1::Rect(x, y, x + 70.0f, y + 70.0f);
-
-	// 변환 전 사각형을 그림.
-	m_pFillBrush1->SetOpacity(0.5f);
-	m_pRenderTarget->FillRectangle(rectangle, m_pFillBrush1);
-	m_pRenderTarget->DrawRectangle(rectangle, m_pTransformedShapeBrush);
-	}
-	else //정사각형이 클릭 되고나서 데이터 추가하는 과정
-	{
-		float diffY = (currentY - current_y) / (currentY - 60.0f);// 현재 포인터와 거리 /전체거리 얼마만큼 가까이 있는가 계산
-
-
-		D2D1_RECT_F rectangle1 = D2D1::Rect(current_x-35.0f, current_y-35.0f, current_x+35.0f, current_y + 35.0f);
-		angle = 360-360 * diffY;// 회전값
-		scale = 2.0f* (1 - diffY) + 1.0f;//스케일
-
-		
-		D2D1_MATRIX_3X2_F rotation = D2D1::Matrix3x2F::Rotation(angle, D2D1::Point2F(current_x,current_y));
-		D2D1_MATRIX_3X2_F scale = D2D1::Matrix3x2F::Scale(D2D1::Size(2.0f* (1 - diffY)+1.0f,1.0f), D2D1::Point2F(current_x, current_y));
-
-		m_pRenderTarget->SetTransform(scale*rotation);
-		//selectFillBrush(rectangle1, 0.5f, temp_std.color);
-		m_pRenderTarget->DrawRectangle(rectangle1, m_pOriginalShapeBrush);
-
-		//학생 구조체 데이터 텍스트 추가
-		WCHAR text[100];
-		//_swprintf(text, L" %s  ,  %d", temp_std.name.c_str(),temp_std.jumsu);
-
-		m_pRenderTarget->DrawText(text, wcslen(text), m_pTextFormat, D2D1::RectF(current_x -35.0f, current_y - 15.0f, current_x + 35.0f, current_y + 35.0f), m_pTextBrush);
-
-
-
-		m_pRenderTarget->SetTransform(D2D1::Matrix3x2F::Identity());
-		//클릭 됐을때 박스 미리 보여주기
-		D2D1_RECT_F rectangle2 = D2D1::Rect(465, currentY -35, 745, currentY +35 );
-		m_pRenderTarget->DrawRectangle(rectangle2, m_pOriginalShapeBrush, 1.5f, m_pStrokeStyleDash);
-		float opacity = 0.5f;
-		//selectFillBrush(rectangle2,opacity,temp_std.color);
-		//_swprintf(text, L" %s  ,  %d", temp_std.name.c_str(), temp_std.jumsu);
-		m_pRenderTarget->DrawText(text, wcslen(text), m_pTextFormat, D2D1::RectF(550, currentY - 35, 745, currentY + 35), m_pTextBrush);
-		
-	}
-	
-	if (isClick2)  //삭제 클릭 여부 확인
-	{
-		float diffY = (currentY - current_y) / (currentY - 60.0f);// 현재 포인터와 거리 /전체거리 얼마만큼 가까이 있는가 계산
-
-
-		D2D1_RECT_F rectangle1 = D2D1::Rect(current_x - 35.0f, current_y - 35.0f, current_x + 35.0f, current_y + 35.0f);
-		angle = 360 - 360 * diffY;//각도
-		scale = 2.0f* (1 - diffY) + 1.0f;//스케일
-
-		D2D1_MATRIX_3X2_F rotation = D2D1::Matrix3x2F::Rotation(angle, D2D1::Point2F(current_x, current_y));
-		D2D1_MATRIX_3X2_F scale = D2D1::Matrix3x2F::Scale(D2D1::Size(2.0f* (1 - diffY) + 1.0f, 1.0f), D2D1::Point2F(current_x, current_y));
-
-		m_pRenderTarget->SetTransform(scale*rotation);
-		//selectFillBrush(rectangle1, 0.5f, temp_std.color);
-		m_pRenderTarget->DrawRectangle(rectangle1, m_pOriginalShapeBrush);
-
-	
-		//_swprintf(text, L" %s  ,  %d", temp_std.name.c_str(), temp_std.jumsu);
-		m_pRenderTarget->DrawText(text, wcslen(text), m_pTextFormat, D2D1::RectF(current_x - 35.0f, current_y - 35.0f, current_x + 35.0f, current_y + 35.0f), m_pTextBrush);
-	}
-
-
-
-	m_pRenderTarget->SetTransform(D2D1::Matrix3x2F::Identity());
-
-
-	int rectangle_y = downY; //출력 시작할 기준점
-	
-
-
-
-}
+//void DemoApp::DrawAll()
+//{
+//	float x = 560.0f;  //초기 박스가 위치할 좌표 x y
+//	float y = 50.0f;
+//	WCHAR text[100];
+//
+//	if (!isClick) { // 상단 중앙의 정사각형이 아직 클릭 안됐을 때
+//	D2D1_RECT_F rectangle = D2D1::Rect(x, y, x + 70.0f, y + 70.0f);
+//
+//	// 변환 전 사각형을 그림.
+//	m_pFillBrush1->SetOpacity(0.5f);
+//	m_pRenderTarget->FillRectangle(rectangle, m_pFillBrush1);
+//	m_pRenderTarget->DrawRectangle(rectangle, m_pTransformedShapeBrush);
+//	}
+//	else //정사각형이 클릭 되고나서 데이터 추가하는 과정
+//	{
+//		float diffY = (currentY - current_y) / (currentY - 60.0f);// 현재 포인터와 거리 /전체거리 얼마만큼 가까이 있는가 계산
+//
+//
+//		D2D1_RECT_F rectangle1 = D2D1::Rect(current_x-35.0f, current_y-35.0f, current_x+35.0f, current_y + 35.0f);
+//		angle = 360-360 * diffY;// 회전값
+//		scale = 2.0f* (1 - diffY) + 1.0f;//스케일
+//
+//		
+//		D2D1_MATRIX_3X2_F rotation = D2D1::Matrix3x2F::Rotation(angle, D2D1::Point2F(current_x,current_y));
+//		D2D1_MATRIX_3X2_F scale = D2D1::Matrix3x2F::Scale(D2D1::Size(2.0f* (1 - diffY)+1.0f,1.0f), D2D1::Point2F(current_x, current_y));
+//
+//		m_pRenderTarget->SetTransform(scale*rotation);
+//		//selectFillBrush(rectangle1, 0.5f, temp_std.color);
+//		m_pRenderTarget->DrawRectangle(rectangle1, m_pOriginalShapeBrush);
+//
+//		//학생 구조체 데이터 텍스트 추가
+//		WCHAR text[100];
+//		//_swprintf(text, L" %s  ,  %d", temp_std.name.c_str(),temp_std.jumsu);
+//
+//		m_pRenderTarget->DrawText(text, wcslen(text), m_pTextFormat, D2D1::RectF(current_x -35.0f, current_y - 15.0f, current_x + 35.0f, current_y + 35.0f), m_pTextBrush);
+//
+//
+//
+//		m_pRenderTarget->SetTransform(D2D1::Matrix3x2F::Identity());
+//		//클릭 됐을때 박스 미리 보여주기
+//		D2D1_RECT_F rectangle2 = D2D1::Rect(465, currentY -35, 745, currentY +35 );
+//		m_pRenderTarget->DrawRectangle(rectangle2, m_pOriginalShapeBrush, 1.5f, m_pStrokeStyleDash);
+//		float opacity = 0.5f;
+//		//selectFillBrush(rectangle2,opacity,temp_std.color);
+//		//_swprintf(text, L" %s  ,  %d", temp_std.name.c_str(), temp_std.jumsu);
+//		m_pRenderTarget->DrawText(text, wcslen(text), m_pTextFormat, D2D1::RectF(550, currentY - 35, 745, currentY + 35), m_pTextBrush);
+//		
+//	}
+//	
+//	if (isClick2)  //삭제 클릭 여부 확인
+//	{
+//		float diffY = (currentY - current_y) / (currentY - 60.0f);// 현재 포인터와 거리 /전체거리 얼마만큼 가까이 있는가 계산
+//
+//
+//		D2D1_RECT_F rectangle1 = D2D1::Rect(current_x - 35.0f, current_y - 35.0f, current_x + 35.0f, current_y + 35.0f);
+//		angle = 360 - 360 * diffY;//각도
+//		scale = 2.0f* (1 - diffY) + 1.0f;//스케일
+//
+//		D2D1_MATRIX_3X2_F rotation = D2D1::Matrix3x2F::Rotation(angle, D2D1::Point2F(current_x, current_y));
+//		D2D1_MATRIX_3X2_F scale = D2D1::Matrix3x2F::Scale(D2D1::Size(2.0f* (1 - diffY) + 1.0f, 1.0f), D2D1::Point2F(current_x, current_y));
+//
+//		m_pRenderTarget->SetTransform(scale*rotation);
+//		//selectFillBrush(rectangle1, 0.5f, temp_std.color);
+//		m_pRenderTarget->DrawRectangle(rectangle1, m_pOriginalShapeBrush);
+//
+//	
+//		//_swprintf(text, L" %s  ,  %d", temp_std.name.c_str(), temp_std.jumsu);
+//		m_pRenderTarget->DrawText(text, wcslen(text), m_pTextFormat, D2D1::RectF(current_x - 35.0f, current_y - 35.0f, current_x + 35.0f, current_y + 35.0f), m_pTextBrush);
+//	}
+//
+//
+//
+//	m_pRenderTarget->SetTransform(D2D1::Matrix3x2F::Identity());
+//
+//
+//	int rectangle_y = downY; //출력 시작할 기준점
+//	
+//
+//
+//
+//}
 
 void DemoApp::selectFillBrush(D2D1_RECT_F &rectangle2, float opacity,int color)
 {
@@ -645,11 +725,12 @@ LRESULT CALLBACK DemoApp::WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM
 		switch(message)
 		{
 		case WM_LBUTTONDOWN:
-			float x, y;
+		
 			
-			x = LOWORD(lParam);
-			y = HIWORD(lParam);
+			mouse_current_x = LOWORD(lParam);
+			mouse_current_y = HIWORD(lParam);
 
+			/*bullets.push_back(Bullet(mouse_current_x, mouse_current_y));*/
 			//// 특정 좌표값의 클릭인지 확인함 (맨위 박스)
 			//if (x >= 560 && x <= 630 && y >= 50 && y <= 120 && vectorsize<=7)
 			//{
@@ -669,8 +750,8 @@ LRESULT CALLBACK DemoApp::WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM
 			break;
 		case WM_LBUTTONUP:
 		
-			x = LOWORD(lParam);
-			y = HIWORD(lParam);
+			mouse_current_x = LOWORD(lParam);
+			mouse_current_y = HIWORD(lParam);
 
 			//if (current_x >= 465 && current_x <= 745 && current_y >= currentY-45 && current_y<= currentY + 45 && isClick==true)
 			//{ // 데이터 추가 드래그앤 드롭 성공
@@ -691,8 +772,8 @@ LRESULT CALLBACK DemoApp::WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM
 			InvalidateRect(hwnd, NULL, false);
 			break;
 		case WM_MOUSEMOVE:
-			current_x = LOWORD(lParam);
-			current_y = HIWORD(lParam);
+			mouse_current_x = LOWORD(lParam);
+			mouse_current_y = HIWORD(lParam);
 
 			InvalidateRect(hwnd,NULL, false);
 			break;

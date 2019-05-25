@@ -81,5 +81,12 @@ private:
 	ID2D1Bitmap* m_pBitmap_Trees;
 
 	//Animation
-	AnimationEaseInOut<float> m_Animation;
+	AnimationLinear<float> m_Animation;
+
+	//기하
+	ID2D1PathGeometry* m_pPathGeometry;
+
+	//시간계산 변수
+	LARGE_INTEGER m_nPrevTime;
+	LARGE_INTEGER m_nFrequency;
 };

@@ -65,7 +65,8 @@ DemoApp::DemoApp() :
 	m_Animation(),
 	m_pBitmap(NULL),
 	m_pBitmap_Mountain(NULL),
-	m_pBitmap_Trees(NULL)
+	m_pBitmap_Trees(NULL),
+	m_pPathGeometry(NULL)
 {
 }
 
@@ -113,10 +114,22 @@ HRESULT DemoApp::Initialize(HINSTANCE hInstance)
 		hr = m_hwnd ? S_OK : E_FAIL;
 		if (SUCCEEDED(hr))
 		{
-			ShowWindow(m_hwnd, SW_SHOWNORMAL);
-			UpdateWindow(m_hwnd);
+			float length = 0;
+			hr = m_pPathGeometry->ComputeLength(NULL, &length);
+
+			if (SUCCEEDED(hr))
+			{
+				m_Animation.SetStart(0); //start at beginning of path
+				m_Animation.SetEnd(length); //length at end of path
+				m_Animation.SetDuration(5.0f); //seconds
+
+				ShowWindow(m_hwnd, SW_SHOWNORMAL);
+				UpdateWindow(m_hwnd);
+			}
 		}
 	}
+	QueryPerformanceFrequency(&m_nFrequency);
+	QueryPerformanceCounter(&m_nPrevTime);
 
 	return hr;
 }
@@ -124,6 +137,7 @@ HRESULT DemoApp::Initialize(HINSTANCE hInstance)
 HRESULT DemoApp::CreateDeviceIndependentResources()
 {
 	HRESULT hr = S_OK;
+	ID2D1GeometrySink* pSink = NULL;
 
 	hr = D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, &m_pD2DFactory);
 
@@ -131,6 +145,29 @@ HRESULT DemoApp::CreateDeviceIndependentResources()
 	{
 		hr = CoCreateInstance(CLSID_WICImagingFactory, NULL, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&m_pWICFactory));
 	}
+
+	// 간단한 삼각형 모양의 경로 기하를 생성함.
+	if (SUCCEEDED(hr))
+	{
+		hr = m_pD2DFactory->CreatePathGeometry(&m_pPathGeometry);
+	}
+	if (SUCCEEDED(hr))
+	{
+		hr = m_pPathGeometry->Open(&pSink);
+	}
+	if (SUCCEEDED(hr))
+	{
+		pSink->BeginFigure(D2D1::Point2F(0.0f, 0.0f), D2D1_FIGURE_BEGIN_FILLED);
+
+		const D2D1_POINT_2F ptLines[] = { {0.0f, 0.0f}, {800.0f, 0.0f}, {1600.0f, 0.0f} };
+		pSink->AddLines(ptLines, 3);
+
+		pSink->EndFigure(D2D1_FIGURE_END_OPEN);
+
+		hr = pSink->Close();
+	}
+
+	
 
 	if (SUCCEEDED(hr))
 	{
@@ -172,6 +209,7 @@ HRESULT DemoApp::CreateDeviceIndependentResources()
 			&m_pStrokeStyleDash
 			);
 	}
+	SAFE_RELEASE(pSink);
 
 	return hr;
 }
@@ -356,6 +394,20 @@ HRESULT DemoApp::OnRender()
 {
 	HRESULT hr = CreateDeviceResources();
 	WCHAR text[100];
+
+
+	D2D1_POINT_2F point;
+	D2D1_POINT_2F tangent;
+
+	D2D1_MATRIX_3X2_F triangleMatrix;
+	D2D1_SIZE_F rtSize = m_pRenderTarget->GetSize();
+	float minWidthHeightScale = min(rtSize.width, rtSize.height) / 512;
+
+	D2D1::Matrix3x2F scale = D2D1::Matrix3x2F::Scale(minWidthHeightScale, minWidthHeightScale);
+
+	D2D1::Matrix3x2F translation = D2D1::Matrix3x2F::Translation(-800.0f ,0.0f );
+
+
 	if (SUCCEEDED(hr))
 	{
 		// 그리기를 시작함.
@@ -373,8 +425,44 @@ HRESULT DemoApp::OnRender()
 
 		//그리드 생성
 
+		//배경 1
 		D2D1_SIZE_F size = m_pBitmap->GetSize();
 		m_pRenderTarget->DrawBitmap(m_pBitmap, D2D1::RectF(0.0f, 0.0f, rtSize.width, rtSize.height));
+		//배경 2 (산)
+		m_pRenderTarget->DrawBitmap(m_pBitmap_Mountain, D2D1::RectF(0.0f, 0.0f, rtSize.width, rtSize.height));
+		
+
+		//애니메이션
+
+		// 렌더타겟 변환을 항등 변환으로 리셋함.
+		m_pRenderTarget->SetTransform(D2D1::Matrix3x2F::Identity());
+		
+		//m_pRenderTarget->SetTransform(scale * translation);
+		
+		// 이동 동선을 붉은색으로 그림.
+		m_pRenderTarget->DrawGeometry(m_pPathGeometry, m_pTextBrush);
+		
+		
+		static float anim_time = 0.0f;
+
+		float length = m_Animation.GetValue(anim_time);
+
+		// 현재 시간에 해당하는 기하 길이에 일치하는 이동 동선 상의 지점을 얻음.
+		m_pPathGeometry->ComputePointAtLength(length, NULL, &point, &tangent);
+
+		// 삼각형의 방향을 조절하여 이동 동선을 따라가는 방향이 되도록 함.
+		triangleMatrix = D2D1::Matrix3x2F(
+			tangent.x, tangent.y,
+			-tangent.y, tangent.x,
+			point.x, point.y);
+
+		m_pRenderTarget->SetTransform(triangleMatrix * scale * translation);
+		//배경 3 비트맵
+		m_pRenderTarget->DrawBitmap(m_pBitmap_Trees, D2D1::RectF(0.0f, 0.0f, rtSize.width, rtSize.height));
+		m_pRenderTarget->SetTransform(translation);
+		
+		// 렌더타겟 변환을 항등 변환으로 리셋함.
+		m_pRenderTarget->SetTransform(D2D1::Matrix3x2F::Identity());
 
 		m_pOriginalShapeBrush->SetOpacity(0.5);
 		m_pFillBrush->SetOpacity(0.5f);
@@ -397,6 +485,21 @@ HRESULT DemoApp::OnRender()
 		{
 			hr = S_OK;
 			DiscardDeviceResources();
+		}
+		// 애니메이션의 끝에 도달하면 다시 처음으로 되돌려서 반복되도록 함.
+		if (anim_time >= m_Animation.GetDuration())
+		{
+			anim_time = 0.0f;
+		}
+		else
+		{
+			LARGE_INTEGER CurrentTime;
+			QueryPerformanceCounter(&CurrentTime);
+
+			float elapsedTime = (float)((double)(CurrentTime.QuadPart - m_nPrevTime.QuadPart) / (double)(m_nFrequency.QuadPart));
+			m_nPrevTime = CurrentTime;
+
+			anim_time += elapsedTime;
 		}
 	}
 

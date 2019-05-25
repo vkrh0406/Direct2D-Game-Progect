@@ -1,22 +1,27 @@
 ﻿  Hw2.cpp
-F:\대학교 과목\4학년 1학기\겜프\hw2\Hw2.cpp(23): warning C4244: '인수': 'time_t'에서 'unsigned int'(으)로 변환하면서 데이터가 손실될 수 있습니다.
-F:\대학교 과목\4학년 1학기\겜프\hw2\Hw2.cpp(389): warning C4996: '_swprintf': This function or variable may be unsafe. Consider using swprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+F:\repo\Direct2D\Direct2D-Game-Progect\Hw2.cpp(23): warning C4244: '인수': 'time_t'에서 'unsigned int'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+F:\repo\Direct2D\Direct2D-Game-Progect\Hw2.cpp(406): warning C4459: 'scale' 선언은 전역 선언을 숨깁니다.
+  F:\repo\Direct2D\Direct2D-Game-Progect\Hw2.cpp(17): note: 'scale' 선언을 참조하십시오.
+F:\repo\Direct2D\Direct2D-Game-Progect\Hw2.cpp(422): warning C4456: 'rtSize' 선언은 이전 로컬 선언을 숨깁니다.
+  F:\repo\Direct2D\Direct2D-Game-Progect\Hw2.cpp(403): note: 'rtSize' 선언을 참조하십시오.
+F:\repo\Direct2D\Direct2D-Game-Progect\Hw2.cpp(477): warning C4477: '_swprintf' : 서식 문자열 '%f'에 'double' 형식의 인수가 필요하지만 variadic 인수 4의 형식이 'D2D1::Matrix3x2F'입니다.
+F:\repo\Direct2D\Direct2D-Game-Progect\Hw2.cpp(477): warning C4996: '_swprintf': This function or variable may be unsafe. Consider using swprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
   C:\Program Files (x86)\Windows Kits\10\Include\10.0.17763.0\ucrt\corecrt_wstdio.h(1446): note: '_swprintf' 선언을 참조하십시오.
-F:\대학교 과목\4학년 1학기\겜프\hw2\Hw2.cpp(431): warning C4459: 'scale' 선언은 전역 선언을 숨깁니다.
-  F:\대학교 과목\4학년 1학기\겜프\hw2\Hw2.cpp(17): note: 'scale' 선언을 참조하십시오.
-F:\대학교 과목\4학년 1학기\겜프\hw2\Hw2.cpp(438): warning C4456: 'text' 선언은 이전 로컬 선언을 숨깁니다.
-  F:\대학교 과목\4학년 1학기\겜프\hw2\Hw2.cpp(410): note: 'text' 선언을 참조하십시오.
-F:\대학교 과목\4학년 1학기\겜프\hw2\Hw2.cpp(452): warning C4244: '인수': 'int'에서 'FLOAT'(으)로 변환하면서 데이터가 손실될 수 있습니다.
-F:\대학교 과목\4학년 1학기\겜프\hw2\Hw2.cpp(466): warning C4459: 'scale' 선언은 전역 선언을 숨깁니다.
-  F:\대학교 과목\4학년 1학기\겜프\hw2\Hw2.cpp(17): note: 'scale' 선언을 참조하십시오.
-F:\대학교 과목\4학년 1학기\겜프\hw2\Hw2.cpp(482): warning C4189: 'rectangle_y': 지역 변수가 초기화되었으나 참조되지 않았습니다.
-F:\대학교 과목\4학년 1학기\겜프\hw2\Hw2.cpp(449): warning C4189: 'opacity': 지역 변수가 초기화되었으나 참조되지 않았습니다.
+F:\repo\Direct2D\Direct2D-Game-Progect\Hw2.cpp(534): warning C4459: 'scale' 선언은 전역 선언을 숨깁니다.
+  F:\repo\Direct2D\Direct2D-Game-Progect\Hw2.cpp(17): note: 'scale' 선언을 참조하십시오.
+F:\repo\Direct2D\Direct2D-Game-Progect\Hw2.cpp(541): warning C4456: 'text' 선언은 이전 로컬 선언을 숨깁니다.
+  F:\repo\Direct2D\Direct2D-Game-Progect\Hw2.cpp(513): note: 'text' 선언을 참조하십시오.
+F:\repo\Direct2D\Direct2D-Game-Progect\Hw2.cpp(555): warning C4244: '인수': 'int'에서 'FLOAT'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+F:\repo\Direct2D\Direct2D-Game-Progect\Hw2.cpp(569): warning C4459: 'scale' 선언은 전역 선언을 숨깁니다.
+  F:\repo\Direct2D\Direct2D-Game-Progect\Hw2.cpp(17): note: 'scale' 선언을 참조하십시오.
+F:\repo\Direct2D\Direct2D-Game-Progect\Hw2.cpp(585): warning C4189: 'rectangle_y': 지역 변수가 초기화되었으나 참조되지 않았습니다.
+F:\repo\Direct2D\Direct2D-Game-Progect\Hw2.cpp(552): warning C4189: 'opacity': 지역 변수가 초기화되었으나 참조되지 않았습니다.
 C:\Program Files (x86)\Windows Kits\10\Include\10.0.17763.0\um\d2d1helper.h(152): warning C4838: 'Type'에서 'FLOAT'(으)로의 변환에는 축소 변환이 필요합니다.
           with
           [
               Type=int
           ]
-  F:\대학교 과목\4학년 1학기\겜프\hw2\Hw2.cpp(447): note: 컴파일 중인 함수 템플릿 인스턴스화 'D2D1::TypeTraits<int>::Rect D2D1::Rect<int>(Type,Type,Type,Type)'에 대한 참조를 확인하십시오.
+  F:\repo\Direct2D\Direct2D-Game-Progect\Hw2.cpp(550): note: 컴파일 중인 함수 템플릿 인스턴스화 'D2D1::TypeTraits<int>::Rect D2D1::Rect<int>(Type,Type,Type,Type)'에 대한 참조를 확인하십시오.
           with
           [
               Type=int
@@ -26,4 +31,4 @@ C:\Program Files (x86)\Windows Kits\10\Include\10.0.17763.0\um\d2d1helper.h(152)
           [
               Type=int
           ]
-  MultipleTransforms.vcxproj -> F:\대학교 과목\4학년 1학기\겜프\hw2\Debug\Hw2.exe
+  MultipleTransforms.vcxproj -> F:\repo\Direct2D\Direct2D-Game-Progect\Debug\Hw2.exe

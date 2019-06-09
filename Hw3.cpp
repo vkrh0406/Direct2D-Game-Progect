@@ -4,9 +4,8 @@
 #include <time.h>
 #include <stdlib.h>
 #include "Bullet.h"
-
-
-
+#include <thread>
+#include "SDKwavefile.h"
 
 int gamePoint; // 표시할 게임 점수
 std::vector<Bullet> bullets;
@@ -20,6 +19,8 @@ float mouse_current_x, mouse_current_y; // 현재 마우스 좌표값
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPSTR /*lpCmdLine*/, int /*nCmdShow*/)
 {
 	srand(time(NULL));
+
+
 	if (SUCCEEDED(CoInitialize(NULL)))
 	{
 		{
@@ -152,6 +153,26 @@ HRESULT DemoApp::CreateDeviceIndependentResources()
 	if (SUCCEEDED(hr))
 	{
 		hr = CoCreateInstance(CLSID_WICImagingFactory, NULL, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&m_pWICFactory));
+	}
+	//xAudio 
+	if (FAILED(hr = XAudio2Create(&pXAudio2, NULL)))
+	{
+		wprintf(L"Failed to init XAudio2 engine: %#X\n", hr);
+		CoUninitialize();
+		return 0;
+	}
+
+	//
+   // Create a mastering voice
+   //
+	
+
+	if (FAILED(hr = pXAudio2->CreateMasteringVoice(&pMasteringVoice)))
+	{
+		wprintf(L"Failed creating mastering voice: %#X\n", hr);
+		SAFE_RELEASE(pXAudio2);
+		CoUninitialize();
+		return 0;
 	}
 
 	// 간단한 삼각형 모양의 경로 기하를 생성함.
@@ -508,6 +529,16 @@ HRESULT DemoApp::OnRender()
 			float size = temp.size;
 			float translation_size = temp.translation_size;
 			
+			if (temp.sound == false)
+			{
+				//std::thread t1(&DemoApp::play);
+				hr = PlayPCM(pXAudio2, L".\\ShotSound.wav");
+				temp.sound = true;
+				bullets.at(i).sound = true;
+
+			
+			}
+
 			m_pRenderTarget->DrawBitmap(m_pBitmap_Bullet, D2D1::RectF(x, y, x+size, y+size-50));
 
 			
@@ -584,6 +615,9 @@ void DemoApp::OnResize(UINT width, UINT height)
 
 LRESULT CALLBACK DemoApp::WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
+
+	HRESULT hr;
+
 	if (message == WM_CREATE)
 	{
 		LPCREATESTRUCT pcs = (LPCREATESTRUCT)lParam;
@@ -598,6 +632,7 @@ LRESULT CALLBACK DemoApp::WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM
 
 	if (pDemoApp)
 	{
+		
 		switch(message)
 		{
 		case WM_LBUTTONDOWN:
@@ -608,6 +643,12 @@ LRESULT CALLBACK DemoApp::WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM
 
 		
 			bullets.push_back(Bullet(mouse_current_x, mouse_current_y));
+			
+			
+		
+			
+			
+
 			//// 특정 좌표값의 클릭인지 확인함 (맨위 박스)
 			//if (x >= 560 && x <= 630 && y >= 50 && y <= 120 && vectorsize<=7)
 			//{
@@ -691,6 +732,7 @@ LRESULT CALLBACK DemoApp::WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM
 // Creates a Direct2D bitmap from the specified file name.
 HRESULT DemoApp::LoadBitmapFromFile(ID2D1RenderTarget* pRenderTarget, IWICImagingFactory* pIWICFactory, PCWSTR uri, UINT destinationWidth, UINT destinationHeight, ID2D1Bitmap** ppBitmap)
 {
+	
 	IWICBitmapDecoder* pDecoder = NULL;
 	IWICBitmapFrameDecode* pSource = NULL;
 	IWICStream* pStream = NULL;
@@ -759,4 +801,187 @@ HRESULT DemoApp::LoadBitmapFromFile(ID2D1RenderTarget* pRenderTarget, IWICImagin
 	SAFE_RELEASE(pScaler);
 
 	return hr;
+}
+
+
+
+//--------------------------------------------------------------------------------------
+// Name: PlayPCM
+// Desc: Plays a wave and blocks until the wave finishes playing
+//--------------------------------------------------------------------------------------
+HRESULT DemoApp::PlayPCM(IXAudio2* pXaudio2, LPCWSTR szFilename)
+{
+	HRESULT hr = S_OK;
+
+	//
+	// Locate the wave file
+	//
+	WCHAR strFilePath[MAX_PATH];
+	if (FAILED(hr = FindMediaFileCch(strFilePath, MAX_PATH, szFilename)))
+	{
+		wprintf(L"Failed to find media file: %s\n", szFilename);
+		return hr;
+	}
+
+	//
+	// Read in the wave file
+	//
+	CWaveFile wav;
+	if (FAILED(hr = wav.Open(strFilePath, NULL, WAVEFILE_READ)))
+	{
+		wprintf(L"Failed reading WAV file: %#X (%s)\n", hr, strFilePath);
+		return hr;
+	}
+
+	// Get format of wave file
+	WAVEFORMATEX* pwfx = wav.GetFormat();
+
+	// Calculate how many bytes and samples are in the wave
+	DWORD cbWaveSize = wav.GetSize();
+
+	// Read the sample data into memory
+	BYTE* pbWaveData = new BYTE[cbWaveSize];
+
+	if (FAILED(hr = wav.Read(pbWaveData, cbWaveSize, &cbWaveSize)))
+	{
+		wprintf(L"Failed to read WAV data: %#X\n", hr);
+		SAFE_DELETE_ARRAY(pbWaveData);
+		return hr;
+	}
+
+	//
+	// Play the wave using a XAudio2SourceVoice
+	//
+
+	// Create the source voice
+	IXAudio2SourceVoice* pSourceVoice;
+	if (FAILED(hr = pXaudio2->CreateSourceVoice(&pSourceVoice, pwfx)))
+	{
+		wprintf(L"Error %#X creating source voice\n", hr);
+		SAFE_DELETE_ARRAY(pbWaveData);
+		return hr;
+	}
+
+	// Submit the wave sample data using an XAUDIO2_BUFFER structure
+	XAUDIO2_BUFFER buffer = { 0 };
+	buffer.pAudioData = pbWaveData;
+	buffer.Flags = XAUDIO2_END_OF_STREAM;  // tell the source voice not to expect any data after this buffer
+	buffer.AudioBytes = cbWaveSize;
+
+	if (FAILED(hr = pSourceVoice->SubmitSourceBuffer(&buffer)))
+	{
+		wprintf(L"Error %#X submitting source buffer\n", hr);
+		pSourceVoice->DestroyVoice();
+		SAFE_DELETE_ARRAY(pbWaveData);
+		return hr;
+	}
+
+	hr = pSourceVoice->Start(0);
+
+	// Let the sound play
+	BOOL isRunning = TRUE;
+	while (SUCCEEDED(hr) && isRunning)
+	{
+		XAUDIO2_VOICE_STATE state;
+		pSourceVoice->GetState(&state);
+		isRunning = (state.BuffersQueued > 0) != 0;
+
+		// Wait till the escape key is pressed
+		if (GetAsyncKeyState(VK_ESCAPE))
+			break;
+
+		Sleep(10);
+	}
+
+	// Wait till the escape key is released
+	while (GetAsyncKeyState(VK_ESCAPE))
+		Sleep(10);
+
+	pSourceVoice->DestroyVoice();
+	SAFE_DELETE_ARRAY(pbWaveData);
+
+	return hr;
+}
+
+
+//--------------------------------------------------------------------------------------
+// Helper function to try to find the location of a media file
+//--------------------------------------------------------------------------------------
+HRESULT DemoApp::FindMediaFileCch(WCHAR* strDestPath, int cchDest, LPCWSTR strFilename)
+{
+	bool bFound = false;
+
+	if (NULL == strFilename || strFilename[0] == 0 || NULL == strDestPath || cchDest < 10)
+		return E_INVALIDARG;
+
+	// Get the exe name, and exe path
+	WCHAR strExePath[MAX_PATH] = { 0 };
+	WCHAR strExeName[MAX_PATH] = { 0 };
+	WCHAR * strLastSlash = NULL;
+	GetModuleFileName(NULL, strExePath, MAX_PATH);
+	strExePath[MAX_PATH - 1] = 0;
+	strLastSlash = wcsrchr(strExePath, TEXT('\\'));
+	if (strLastSlash)
+	{
+		wcscpy_s(strExeName, MAX_PATH, &strLastSlash[1]);
+
+		// Chop the exe name from the exe path
+		*strLastSlash = 0;
+
+		// Chop the .exe from the exe name
+		strLastSlash = wcsrchr(strExeName, TEXT('.'));
+		if (strLastSlash)
+			* strLastSlash = 0;
+	}
+
+	wcscpy_s(strDestPath, cchDest, strFilename);
+	if (GetFileAttributes(strDestPath) != 0xFFFFFFFF)
+		return S_OK;
+
+	// Search all parent directories starting at .\ and using strFilename as the leaf name
+	WCHAR strLeafName[MAX_PATH] = { 0 };
+	wcscpy_s(strLeafName, MAX_PATH, strFilename);
+
+	WCHAR strFullPath[MAX_PATH] = { 0 };
+	WCHAR strFullFileName[MAX_PATH] = { 0 };
+	WCHAR strSearch[MAX_PATH] = { 0 };
+	WCHAR * strFilePart = NULL;
+
+	GetFullPathName(L".", MAX_PATH, strFullPath, &strFilePart);
+	if (strFilePart == NULL)
+		return E_FAIL;
+
+	while (strFilePart != NULL && *strFilePart != '\0')
+	{
+		swprintf_s(strFullFileName, MAX_PATH, L"%s\\%s", strFullPath, strLeafName);
+		if (GetFileAttributes(strFullFileName) != 0xFFFFFFFF)
+		{
+			wcscpy_s(strDestPath, cchDest, strFullFileName);
+			bFound = true;
+			break;
+		}
+
+		swprintf_s(strFullFileName, MAX_PATH, L"%s\\%s\\%s", strFullPath, strExeName, strLeafName);
+		if (GetFileAttributes(strFullFileName) != 0xFFFFFFFF)
+		{
+			wcscpy_s(strDestPath, cchDest, strFullFileName);
+			bFound = true;
+			break;
+		}
+
+		swprintf_s(strSearch, MAX_PATH, L"%s\\..", strFullPath);
+		GetFullPathName(strSearch, MAX_PATH, strFullPath, &strFilePart);
+	}
+	if (bFound)
+		return S_OK;
+
+	// On failure, return the file as the path but also return an error code
+	wcscpy_s(strDestPath, cchDest, strFilename);
+
+	return HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND);
+}
+
+void DemoApp::play()
+{
+	PlayPCM(pXAudio2, L".\\ShotSound.wav");
 }

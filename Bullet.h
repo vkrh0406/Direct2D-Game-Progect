@@ -10,6 +10,7 @@ public:
 	float x, y;
 	float size = 100;
 	float translation_size = 0;
+	bool sound = false;
 private:
 
 };

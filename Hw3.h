@@ -13,11 +13,16 @@
 #include <d2d1helper.h>
 #include <dwrite.h>
 #include <wincodec.h>
-
+#include <xaudio2.h>
 #include "Animation.h"
 
 // 자원 안전 반환 매크로.
 #define SAFE_RELEASE(p) { if(p) { (p)->Release(); (p)=NULL; } }
+
+#ifndef SAFE_DELETE_ARRAY
+#define SAFE_DELETE_ARRAY(p) { if(p) { delete[] (p);   (p)=NULL; } }
+#endif
+#define FAILED(hr)      (((HRESULT)(hr)) < 0)
 
 class DemoApp
 {
@@ -44,6 +49,11 @@ private:
 
 
 	HRESULT LoadBitmapFromFile(ID2D1RenderTarget* pRenderTarget, IWICImagingFactory* pIWICFactory, PCWSTR uri, UINT destinationWidth, UINT destinationHeight, ID2D1Bitmap** ppBitmap);
+
+	//사운드 관련 함수
+	HRESULT FindMediaFileCch(WCHAR* strDestPath, int cchDest, LPCWSTR strFilename);
+	HRESULT PlayPCM(IXAudio2* pXaudio2, LPCWSTR szFilename);
+	void play();
 
 
 private:
@@ -93,4 +103,8 @@ private:
 	//시간계산 변수
 	LARGE_INTEGER m_nPrevTime;
 	LARGE_INTEGER m_nFrequency;
+
+	//사운드
+	IXAudio2* pXAudio2 = NULL;
+	IXAudio2MasteringVoice* pMasteringVoice = NULL;
 };

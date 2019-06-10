@@ -50,10 +50,13 @@ private:
 
 	HRESULT LoadBitmapFromFile(ID2D1RenderTarget* pRenderTarget, IWICImagingFactory* pIWICFactory, PCWSTR uri, UINT destinationWidth, UINT destinationHeight, ID2D1Bitmap** ppBitmap);
 
+
+public:
+
 	//사운드 관련 함수
 	HRESULT FindMediaFileCch(WCHAR* strDestPath, int cchDest, LPCWSTR strFilename);
 	HRESULT PlayPCM(IXAudio2* pXaudio2, LPCWSTR szFilename);
-	void play();
+
 
 
 private:

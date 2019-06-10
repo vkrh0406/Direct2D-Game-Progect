@@ -7,13 +7,20 @@
 #include <thread>
 #include "SDKwavefile.h"
 
+
+DemoApp* program;
 int gamePoint; // 표시할 게임 점수
 std::vector<Bullet> bullets;
 int vectorsize = 0; //벡터 사이즈
 clock_t cooltime_start, cooltime_end;
 float enemy_spawn_cooltime = 2.0f;
-
+float soundVolume = 1; //사운드 볼륨
+bool soundMute = false;  //사운드 음소거
+bool bulletSound = false;
 float mouse_current_x, mouse_current_y; // 현재 마우스 좌표값
+
+
+
 
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPSTR /*lpCmdLine*/, int /*nCmdShow*/)
@@ -72,6 +79,7 @@ DemoApp::DemoApp() :
 	m_pBitmap_Trees(NULL),
 	m_pPathGeometry(NULL)
 {
+	program = this;
 }
 
 DemoApp::~DemoApp()
@@ -440,7 +448,7 @@ HRESULT DemoApp::OnRender()
 {
 	HRESULT hr = CreateDeviceResources();
 	WCHAR text[100];
-
+	WCHAR text2[100];
 
 	D2D1_POINT_2F point;
 	D2D1_POINT_2F tangent;
@@ -529,13 +537,13 @@ HRESULT DemoApp::OnRender()
 			float size = temp.size;
 			float translation_size = temp.translation_size;
 			
-			if (temp.sound == false)
+			if (bulletSound == true)
 			{
-				//std::thread t1(&DemoApp::play);
-				hr = PlayPCM(pXAudio2, L".\\ShotSound.wav");
-				temp.sound = true;
-				bullets.at(i).sound = true;
+				std::thread tsound([&]() {PlayPCM(pXAudio2, L".\\ShotSound.wav");});
+				tsound.detach();
 
+				bulletSound = false;
+				
 			
 			}
 
@@ -548,8 +556,10 @@ HRESULT DemoApp::OnRender()
 
 			if (x >= 10.0f && x <= 150.0f && y >= 250.0f && y <= 400.0f) //충돌 확인
 			{
+				std::thread tsound([&]() {PlayPCM(pXAudio2, L".\\HitSound.wav");});
+				tsound.detach();
 				gamePoint += 100;
-
+			
 				iter=bullets.erase(iter);
 			}
 			else {
@@ -565,9 +575,10 @@ HRESULT DemoApp::OnRender()
 
 		m_pRenderTarget->SetTransform(D2D1::Matrix3x2F::Identity());
 		
-		_swprintf(text, L"마우스x:%f\n마우스y:%f\n 점수: %d \n", mouse_current_x, mouse_current_y,gamePoint);
+		_swprintf(text, L"마우스x:%f\n마우스y:%f\n 점수: %d \n 볼륨(업다운키): %f \n 음소거(컨트롤키): %s \n", mouse_current_x, mouse_current_y,gamePoint, soundVolume, soundMute == false ? L"False" : L"True");
+	//	_swprintf(text2, L"사운드 볼륨: %f \n 사운드 음소거: %s \n", soundVolume, soundMute==false ? L"False":L"True");
 
-		m_pRenderTarget->DrawText(text, wcslen(text), m_pTextFormat, D2D1::RectF(10.0f, 10.0f, 150.0f, 150.0f), m_pTextBrush);
+		m_pRenderTarget->DrawText(text, wcslen(text), m_pTextFormat, D2D1::RectF(10.0f, 10.0f, 200.0f, 150.0f), m_pTextBrush);
 
 		
 
@@ -635,6 +646,26 @@ LRESULT CALLBACK DemoApp::WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM
 		
 		switch(message)
 		{
+		case WM_KEYDOWN:
+			switch (wParam) {
+
+			case VK_UP:
+				if (soundVolume < 1)
+				{
+					soundVolume += 0.25;
+				}
+				break;
+			case VK_DOWN:
+				if (soundVolume > 0)
+				{
+					soundVolume -= 0.25;
+				}
+				break;
+			case VK_CONTROL:
+				soundMute = !soundMute;
+			}
+			
+			return 0;
 		case WM_LBUTTONDOWN:
 		
 			
@@ -644,6 +675,7 @@ LRESULT CALLBACK DemoApp::WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM
 		
 			bullets.push_back(Bullet(mouse_current_x, mouse_current_y));
 			
+			bulletSound = true;
 			
 		
 			
@@ -812,7 +844,7 @@ HRESULT DemoApp::LoadBitmapFromFile(ID2D1RenderTarget* pRenderTarget, IWICImagin
 HRESULT DemoApp::PlayPCM(IXAudio2* pXaudio2, LPCWSTR szFilename)
 {
 	HRESULT hr = S_OK;
-
+	
 	//
 	// Locate the wave file
 	//
@@ -867,7 +899,13 @@ HRESULT DemoApp::PlayPCM(IXAudio2* pXaudio2, LPCWSTR szFilename)
 	buffer.pAudioData = pbWaveData;
 	buffer.Flags = XAUDIO2_END_OF_STREAM;  // tell the source voice not to expect any data after this buffer
 	buffer.AudioBytes = cbWaveSize;
-
+	if (soundMute) {
+		pSourceVoice->SetVolume(0);
+	}
+	else
+	{
+		pSourceVoice->SetVolume(soundVolume);
+	}
 	if (FAILED(hr = pSourceVoice->SubmitSourceBuffer(&buffer)))
 	{
 		wprintf(L"Error %#X submitting source buffer\n", hr);
@@ -880,22 +918,25 @@ HRESULT DemoApp::PlayPCM(IXAudio2* pXaudio2, LPCWSTR szFilename)
 
 	// Let the sound play
 	BOOL isRunning = TRUE;
+
+
+	
 	while (SUCCEEDED(hr) && isRunning)
 	{
 		XAUDIO2_VOICE_STATE state;
 		pSourceVoice->GetState(&state);
 		isRunning = (state.BuffersQueued > 0) != 0;
 
-		// Wait till the escape key is pressed
-		if (GetAsyncKeyState(VK_ESCAPE))
-			break;
+		 //Wait till the escape key is pressed
+	/*	if (GetAsyncKeyState(VK_ESCAPE))
+			break;*/
 
 		Sleep(10);
 	}
 
 	// Wait till the escape key is released
-	while (GetAsyncKeyState(VK_ESCAPE))
-		Sleep(10);
+	//while (GetAsyncKeyState(VK_ESCAPE))
+	//	Sleep(10);
 
 	pSourceVoice->DestroyVoice();
 	SAFE_DELETE_ARRAY(pbWaveData);
@@ -979,9 +1020,4 @@ HRESULT DemoApp::FindMediaFileCch(WCHAR* strDestPath, int cchDest, LPCWSTR strFi
 	wcscpy_s(strDestPath, cchDest, strFilename);
 
 	return HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND);
-}
-
-void DemoApp::play()
-{
-	PlayPCM(pXAudio2, L".\\ShotSound.wav");
 }

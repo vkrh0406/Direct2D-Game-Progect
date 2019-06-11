@@ -6,11 +6,12 @@
 #include "Bullet.h"
 #include <thread>
 #include "SDKwavefile.h"
-
+#include "Character.h"
 
 DemoApp* program;
 int gamePoint; // 표시할 게임 점수
-std::vector<Bullet> bullets;
+std::vector<Bullet> bullets; //플레이어 총알
+std::vector<Bullet> EnemyBullets; // 적 총알
 int vectorsize = 0; //벡터 사이즈
 clock_t cooltime_start, cooltime_end;
 float enemy_spawn_cooltime = 2.0f;
@@ -19,6 +20,13 @@ bool soundMute = false;  //사운드 음소거
 bool bulletSound = false;
 float mouse_current_x, mouse_current_y; // 현재 마우스 좌표값
 
+DWORD enemyStateTransitions[][3] = {
+			
+			{ Character::STATE_MOVE, Character::EVENT_FINDTARGET, Character::STATE_ATTACK },
+			{ Character::STATE_ATTACK, Character::EVENT_LOSTTARGET, Character::STATE_MOVE },
+
+};
+Character* enemy = new Character(enemyStateTransitions, 2);
 
 
 
@@ -36,6 +44,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPSTR /*lpC
 			if (SUCCEEDED(app.Initialize(hInstance)))
 			{
 				app.RunMessageLoop();
+				
 			}
 		}
 		CoUninitialize();
@@ -246,6 +255,8 @@ HRESULT DemoApp::CreateDeviceIndependentResources()
 			&m_pStrokeStyleDash
 			);
 	}
+
+
 	SAFE_RELEASE(pSink);
 
 	return hr;
@@ -522,18 +533,76 @@ HRESULT DemoApp::OnRender()
 		m_pRenderTarget->DrawBitmap(m_pBitmap_Gun, D2D1::RectF(mouse_current_x-80.0f, mouse_current_y-80.0f, mouse_current_x+80.0f, mouse_current_y + 80.0f));
 
 		//적 생성
-		m_pRenderTarget->DrawBitmap(m_pBitmap_Enemy, D2D1::RectF(10.0f,250.0f,150.0f, 400.0f));
+		D2D1_POINT_2F enemyposition = enemy->getPosition();
+		m_pRenderTarget->DrawBitmap(m_pBitmap_Enemy, D2D1::RectF(enemyposition.x,enemyposition.y-60.0f, enemyposition.x+120.0f, enemyposition.y + 60.0f));  //240, 250
 
 		std::vector<Bullet>::iterator iter;
+		
+		
 
+		int j = 0;
+	
+		
+		
+		
+		// Enemy 총알 생성 및 충돌 감지
+		for (iter = EnemyBullets.begin(); iter != EnemyBullets.end();)
+		{
+			Bullet temp = *iter;
+
+			float x = temp.x;
+			float y = temp.y;
+
+
+			float size = temp.size;
+			float translation_size = temp.translation_size;
+
+			if (bulletSound == true)
+			{
+				std::thread tsound([&]() {PlayPCM(pXAudio2, L".\\ShotSound.wav"); });
+				tsound.detach();
+
+				bulletSound = false;
+
+
+			}
+			m_pRenderTarget->SetTransform(D2D1::Matrix3x2F::Rotation(180.0f, D2D1::Point2F((x+x+size)/2,(y+y+size)/2)));
+			m_pRenderTarget->DrawBitmap(m_pBitmap_Bullet, D2D1::RectF(x, y, x + size, y + size));
+
+
+			EnemyBullets.at(j).x = x + 15.0f;
+			EnemyBullets.at(j).y = y;
+
+			if (x >= mouse_current_x-100.0f && x <= mouse_current_x + 100.0f && y >= mouse_current_y- 100.0f && y <= mouse_current_y + 30.0f) //충돌 확인
+			{
+				std::thread tsound([&]() {PlayPCM(pXAudio2, L".\\HitSound.wav"); });
+				tsound.detach();
+				gamePoint -= 100;
+
+				iter = EnemyBullets.erase(iter);
+			}
+			else {
+				j++;
+				iter++;
+			}
+
+
+		}
+		m_pRenderTarget->SetTransform(D2D1::Matrix3x2F::Identity());
 		int i = 0;
-		//총알 생성 및 충돌 감지
+		// 플레이어 총알 생성 및 충돌 감지
 		for (iter=bullets.begin();iter!=bullets.end();)
 		{
 			Bullet temp = *iter;
 			
 			float x = temp.x;
 			float y = temp.y;
+			float a = temp.a;
+			
+			
+
+
+
 			float size = temp.size;
 			float translation_size = temp.translation_size;
 			
@@ -550,17 +619,18 @@ HRESULT DemoApp::OnRender()
 			m_pRenderTarget->DrawBitmap(m_pBitmap_Bullet, D2D1::RectF(x, y, x+size, y+size-50));
 
 			
-
+			AddPositionY(&y, &a); // 총알에 중력영향
 
 			bullets.at(i).x = x - 5.0f;
-
-			if (x >= 10.0f && x <= 150.0f && y >= 250.0f && y <= 400.0f) //충돌 확인
+			bullets.at(i).y = y;
+			bullets.at(i).a = a;
+			if (x >= enemyposition.x && x <= enemyposition.x+120.0f && y >= enemyposition.y-60.0f && y <= enemyposition.y+60.0f) //충돌 확인
 			{
 				std::thread tsound([&]() {PlayPCM(pXAudio2, L".\\HitSound.wav");});
 				tsound.detach();
 				gamePoint += 100;
 			
-				iter=bullets.erase(iter);
+				iter= bullets.erase(iter);
 			}
 			else {
 				i++;
@@ -610,6 +680,8 @@ HRESULT DemoApp::OnRender()
 			anim_time += elapsedTime;
 		}
 	}
+
+	enemy->update(mouse_current_x, mouse_current_y, NULL, &EnemyBullets);
 
 	return hr;
 }
@@ -1020,4 +1092,13 @@ HRESULT DemoApp::FindMediaFileCch(WCHAR* strDestPath, int cchDest, LPCWSTR strFi
 	wcscpy_s(strDestPath, cchDest, strFilename);
 
 	return HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND);
+}
+
+void DemoApp::AddPositionY(float* y,float* a) // 중력 영향
+{
+	
+	*a += 0.1;
+	*y = *a + *y;
+
+	return;
 }

@@ -41,6 +41,7 @@ private:
 	void OnResize(UINT width, UINT height);
 
 	void DrawAll();
+	void AddPositionY(float* y,float* a);
 
 
 	void selectFillBrush(D2D1_RECT_F &rectangle2,float opacity,int color);

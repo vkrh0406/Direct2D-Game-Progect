@@ -1,2 +1,2 @@
-#TargetFrameworkVersion=v4.0:PlatformToolSet=v141:EnableManagedIncrementalBuild=false:VCToolArchitecture=Native32Bit:WindowsTargetPlatformVersion=10.0.15063.0
-Debug|Win32|C:\Users\SongHyeonWook\Desktop\대학교과목\4-1\Direct2D-Game-Progect\|
+#TargetFrameworkVersion=v4.0:PlatformToolSet=v142:EnableManagedIncrementalBuild=false:VCToolArchitecture=Native32Bit:WindowsTargetPlatformVersion=10.0
+Debug|Win32|F:\repo\Direct2D\Direct2D-Game-Progect\|

@@ -22,7 +22,7 @@
     <ProjectGuid>{64C2DD1C-C749-4ED2-B3C3-9DF79E6A43D5}</ProjectGuid>
     <RootNamespace>MultipleTransforms</RootNamespace>
     <Keyword>Win32Proj</Keyword>
-    <WindowsTargetPlatformVersion>10.0.15063.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
     <ProjectName>HW3</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -35,7 +35,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <CharacterSet>Unicode</CharacterSet>
-    <PlatformToolset>v141</PlatformToolset>
+    <PlatformToolset>v142</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
@@ -192,12 +192,16 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Bullet.cpp" />
+    <ClCompile Include="Character.cpp" />
+    <ClCompile Include="FiniteStateMachine.cpp" />
     <ClCompile Include="Hw3.cpp" />
     <ClCompile Include="SDKwavefile.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Animation.h" />
     <ClInclude Include="Bullet.h" />
+    <ClInclude Include="Character.h" />
+    <ClInclude Include="FiniteStateMachine.h" />
     <ClInclude Include="Hw3.h" />
     <ClInclude Include="SDKwavefile.h" />
   </ItemGroup>

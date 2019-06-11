@@ -1,13 +1,6 @@
-﻿  Hw3.cpp
-Hw3.cpp(28): warning C4244: '인수': 'time_t'에서 'unsigned int'(으)로 변환하면서 데이터가 손실될 수 있습니다.
-Hw3.cpp(476): warning C4456: 'rtSize' 선언은 이전 로컬 선언을 숨깁니다.
-  Hw3.cpp(457): note: 'rtSize' 선언을 참조하십시오.
-Hw3.cpp(537): warning C4456: 'size' 선언은 이전 로컬 선언을 숨깁니다.
-  Hw3.cpp(483): note: 'size' 선언을 참조하십시오.
-Hw3.cpp(578): warning C4996: '_swprintf': This function or variable may be unsafe. Consider using swprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
-  C:\Program Files (x86)\Windows Kits\10\Include\10.0.15063.0\ucrt\corecrt_wstdio.h(1446): note: '_swprintf' 선언을 참조하십시오.
-Hw3.cpp(451): warning C4101: 'text2' :참조되지 않은 지역 변수입니다.
-Hw3.cpp(538): warning C4189: 'translation_size': 지역 변수가 초기화되었으나 참조되지 않았습니다.
-Hw3.cpp(630): warning C4101: 'hr' :참조되지 않은 지역 변수입니다.
-  MultipleTransforms.vcxproj -> C:\Users\SongHyeonWook\Desktop\대학교과목\4-1\Direct2D-Game-Progect\Debug\HW3.exe
-  MultipleTransforms.vcxproj -> C:\Users\SongHyeonWook\Desktop\대학교과목\4-1\Direct2D-Game-Progect\Debug\HW3.pdb (Full PDB)
+﻿  Character.cpp
+F:\repo\Direct2D\Direct2D-Game-Progect\Character.cpp(137): warning C4100: 'timeDelta': 참조되지 않은 정식 매개 변수입니다.
+F:\repo\Direct2D\Direct2D-Game-Progect\Character.cpp(140): warning C4100: 'timeDelta': 참조되지 않은 정식 매개 변수입니다.
+F:\repo\Direct2D\Direct2D-Game-Progect\Character.cpp(141): warning C4100: 'timeDelta': 참조되지 않은 정식 매개 변수입니다.
+F:\repo\Direct2D\Direct2D-Game-Progect\Character.cpp(209): warning C4244: '=': 'double'에서 'float'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+  MultipleTransforms.vcxproj -> F:\repo\Direct2D\Direct2D-Game-Progect\Debug\HW3.exe

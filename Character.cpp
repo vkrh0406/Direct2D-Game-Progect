@@ -67,7 +67,6 @@ void Character::updateAI(float mouseX, float mouseY, float timeDelta, std::vecto
 					break;
 				}
 				position.y -= 2;
-
 			}
 			else
 			{

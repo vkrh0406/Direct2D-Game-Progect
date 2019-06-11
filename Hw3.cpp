@@ -564,7 +564,6 @@ HRESULT DemoApp::OnRender()
 
 				bulletSound = false;
 
-
 			}
 			m_pRenderTarget->SetTransform(D2D1::Matrix3x2F::Rotation(180.0f, D2D1::Point2F((x+x+size)/2,(y+y+size)/2)));
 			m_pRenderTarget->DrawBitmap(m_pBitmap_Bullet, D2D1::RectF(x, y, x + size, y + size));
